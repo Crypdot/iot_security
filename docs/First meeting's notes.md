@@ -34,7 +34,7 @@ The technical side is not the issue. It's communication. "What I expect of you, 
 ## General notes
 Set up Github. Every time we meet, we should have something to show Ian. Doesn't matter if there's no UI. There should just be something new.
 
-There are no stupid questions. Ask, when you're unsure. If you write on Discord "X does not work", this isn't helpful. Make an honest attempt to fix the issue, but also provide proper and thorough notes on your attempts when asking others, either on Discord or in person. To reiterate: Ask if you are uncertain of any aspect. It is only beneficial to work on your own learning. ==We're studying for a reason; we should strive to increase our understanding of these aspects.==
+There are no stupid questions. Ask, when you're unsure. If you write on Discord "X does not work", this isn't helpful. Make an honest attempt to fix the issue, but also provide proper and thorough notes on your attempts when asking others, either on Discord or in person. To reiterate: Ask if you are uncertain of any aspect. It is only beneficial to work on your own learning. We're studying for a reason; we should strive to increase our understanding of these aspects.
 
 ## Nokia Garage and Intake procedure
 Next meeting is on Monday the 18th, 9:30. Nokia, Espoo. Karamalmi. (Nokia coordinates: `60.22174, 24.7562`)
