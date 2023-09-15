@@ -37,7 +37,7 @@ Set up Github. Every time we meet, we should have something to show Ian. Doesn't
 There are no stupid questions. Ask, when you're unsure. If you write on Discord "X does not work", this isn't helpful. Make an honest attempt to fix the issue, but also provide proper and thorough notes on your attempts when asking others, either on Discord or in person. To reiterate: Ask if you are uncertain of any aspect. It is only beneficial to work on your own learning. We're studying for a reason; we should strive to increase our understanding of these aspects.
 
 ## Nokia Garage and Intake procedure
-Next meeting is on Monday the 18th, 9:30. Nokia, Espoo. Karamalmi. (Nokia coordinates: `60.22174, 24.7562`)
+Next meeting is on Monday the 18th, 9:00. Nokia, Espoo. Karamalmi. (Nokia coordinates: `60.22174, 24.7562`)
 
 There's a reception desk. There will be a machine you type your name, host name (Ian Oliver, in this case). The receptionist will give you a badge. Ask her to give Ian a call, if he isn't already there. Always be nice to receptionists!
 
@@ -60,4 +60,4 @@ Relevant technologies: `Golang`,  `Python`,  `Arduino`,  `MQTT`,   `JSON`,  `HTT
 ## Future meetings
 Team meetings on Thursdays at 10:00, in Zoom. If necessary, we will also arrange for face-to-face meetings.
 
-Meeting with Ian on Monday 18th, at 09:30
+Meeting with Ian on Monday 18th, at 09:00
