@@ -1,14 +1,18 @@
+import json
 import numpy as np
 import time
 import paho.mqtt.client as mqtt
 
-# Parameters for the MQTT broker
-MQTT_BROKER_HOST = "192.168.56.102"  
-MQTT_BROKER_PORT = 1883
-MQTT_TOPIC_SINE_WAVE = "sine_wave_data"
-MQTT_TOPIC_PUMP_CONTROL = "pump_control"
+with open('config.json', 'r') as configFile:
+    config = json.load(configFile)
 
-# Pump contorl parameters
+# Parameters for the MQTT broker
+MQTT_BROKER_HOST = config["mqttBrokerHost"]  
+MQTT_BROKER_PORT = config["mqttBrokerPort"]
+MQTT_TOPIC_SINE_WAVE = config["mqttTopicSineWave"]
+MQTT_TOPIC_PUMP_CONTROL = config["mqttTopicPumpControl"]
+
+# Pump control parameters
 pumpRunning = False
 pumpMode = 1	# 1 for continuous, 2 for sine wave, 3 for reserve
 
@@ -33,15 +37,15 @@ Callback function for handling pump control messages. Maps the MQTT messages to 
 """
 def onPumpControl(client, userdata, msg):
 	message = msg.payload.decode()
-	if message == "Start the pump!":
+	if message == "startPump":
 		setPumpState(True)
-	elif message == "Stop the pump!":
+	elif message == "stopPump":
 		setPumpState(False)
-	elif message == "Change pump to mode 1":
+	elif message == "pumpModeOne":
 		setPumpMode(1)
-	elif message == "Change pump to mode 2":
+	elif message == "pumpModeTwo":
 		setPumpMode(2)
-	elif message == "Change pump to mode 3":
+	elif message == "pumpModeThree":
 		setPumpMode(3)
 
 """
