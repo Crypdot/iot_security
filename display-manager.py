@@ -7,7 +7,7 @@ MQTT_TOPIC = "sine_wave_data"
 
 client = mqtt.Client()
 """
-on_connect creates a connection between MQTT_BROKER and the client application
+Function "on_connect" creates a connection between MQTT_BROKER and the client application.
 """
 def on_connect(clinet, userdata, dlags, rc):
     if rc == 0:
@@ -16,7 +16,7 @@ def on_connect(clinet, userdata, dlags, rc):
         print("Connection to MQTT Broker failed")
 
 """
-on_message is a callback function that reads messages once the subscribed topic publishes a new message
+Function "on_message" is a callback function that reads messages once the subscribed topic publishes a new message.
 """
 def on_message(client, userdata, message):
     print("Message received: ", str(message.payload.decode("utf-8")))
@@ -25,9 +25,9 @@ def on_message(client, userdata, message):
 
 """
 Main function does the following:
-- creates a connection to the MQTT Broker,
+- creates a connection to the MQTT_BROKER,
 - subscribes to the desired topic
-- sets the callback function "on message" for when messages are received
+- sets the callback function "on_message" for when messages are received
 Currently the function ends the loop prematurely. This is purely for debugging purposes.
 """
 if __name__=="__main__":
