@@ -2,5 +2,6 @@
     "mqttBrokerHost": "192.168.1.204",
     "mqttBrokerPort": 1883,
     "mqttTopicSineWave": "sineWaveData",
-    "mqttTopicPumpControl": "pumpControl"
+    "mqttTopicPumpConfig": "box01/motor/config/in/",
+    "mqttTopicPumpCommand": "box01/motor/command/in/"
 }
