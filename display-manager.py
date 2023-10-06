@@ -1,15 +1,19 @@
+import json
 import time
 import paho.mqtt.client as mqtt
 
-MQTT_BROKER_HOST = "172.17.170.119"
-MQTT_BROKER_PORT = 1883
-MQTT_TOPIC = "sine_wave_data"
+with open('config.json', 'r') as configFile:
+    config = json.load(configFile)
+
+MQTT_BROKER_HOST = config["mqttBrokerHost"]
+MQTT_BROKER_PORT = config["mqttBrokerPort"]
+MQTT_TOPIC = config["mqttTopicSineWave"]
 
 client = mqtt.Client()
 """
 Function "on_connect" creates a connection between MQTT_BROKER and the client application.
 """
-def on_connect(clinet, userdata, dlags, rc):
+def onConnect(client, userdata, dlags, rc):
     if rc == 0:
         print(f"Connected to MQTT Broker at: {MQTT_BROKER_HOST}")
     else:
@@ -18,10 +22,9 @@ def on_connect(clinet, userdata, dlags, rc):
 """
 Function "on_message" is a callback function that reads messages once the subscribed topic publishes a new message.
 """
-def on_message(client, userdata, message):
+def onMessage(client, userdata, message):
     print("Message received: ", str(message.payload.decode("utf-8")))
     print(f"Message topic: {message.topic}")
-
 
 """
 Main function does the following:
@@ -30,11 +33,18 @@ Main function does the following:
 - sets the callback function "on_message" for when messages are received
 Currently the function ends the loop prematurely. This is purely for debugging purposes.
 """
-if __name__=="__main__":
-    client.on_connect = on_connect
+if __name__ == "__main__":
+    client = mqtt.Client()
+    client.on_connect = onConnect
     client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
-    client.on_message=on_message
+    client.on_message = onMessage
     client.subscribe(MQTT_TOPIC)
     client.loop_start()
-    time.sleep(30)
-    client.loop_stop()
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Interrupted by keyboard press. Exiting...")
+        client.loop_stop()
+        client.disconnect()
