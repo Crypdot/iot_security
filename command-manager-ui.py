@@ -29,7 +29,6 @@ diffPressureMaxSpeed: int = 1999
 contPressureSpeed: int = 1500
 pumpOperatingMode: int = 1
 
-
 """
 Creates the main view presented to the user, containing the views for configuring both of the current modes we have available to us.
 """
@@ -63,13 +62,14 @@ class MainView(tk.Frame):
         if self.pumpRunning:
             self.pumpRunning = False
             self.togglePumpButton.config(text="Start Pump")
-            print(f"STOPPING PUMP")
-            client.publish(MQTT_TOPIC_PUMP_COMMAND, "stopPump")
+            print(f"STOPPING PUMP: Sending '0' to MQTT")
+            client.publish(MQTT_TOPIC_PUMP_COMMAND, "0")
         else:
             self.pumpRunning = True
             self.togglePumpButton.config(text="Stop Pump")
-            print(f"STARTING PUMP")
-            client.publish(MQTT_TOPIC_PUMP_COMMAND, "startPump")
+            print(f"STARTING PUMP: Sending '1' to MQTT")
+            client.publish(MQTT_TOPIC_PUMP_COMMAND, "1")
+
 """
 Creates the view for the differential pressure configuration. Inputs are as follows:
 - Rising duration: float
@@ -126,7 +126,7 @@ class DiffPressureView(tk.Frame):
     Calculates the ratio between two given time periods.
     """
     def calculateRatio(self, x, y) -> float:
-        return round(y/(x+y), 2)
+        return round(x/(x+y), 2)
 
     def onOKButtonClick(self):
         global diffPressureRatio, diffPressurePeriod, diffPressureMinSpeed, diffPressureMaxSpeed
