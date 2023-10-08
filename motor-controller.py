@@ -107,7 +107,7 @@ def validateConfig(commaSeparatedValues):
 		raise ValueError(f"Invalid maximum differential level: {config[0]}")
 	elif config[4] <= 0.0:
 		raise ValueError(f"Non-positive differential period: {config[0]}")
-	elif config[5] <= 0.0 or config[5] > 1.0:
+	elif config[5] < 0.0 or config[5] > 1.0:
 		raise ValueError(f"Invalid differential ratio: {config[0]}")
 	
 	return config
@@ -183,10 +183,16 @@ def getDifferentialSpeed():
 
 	if timeWithinPeriod < risingDuration:
 		# Rising, use 1st quarter of the unit circle
-		sinValue = np.sin(np.pi * 0.5 * timeWithinPeriod / risingDuration)
+		if risingDuration == 0:
+			sinValue = 0
+		else:
+			sinValue = np.sin(np.pi * 0.5 * timeWithinPeriod / risingDuration)
 	else:
 		# Falling, use 3rd quarter of the unit circle
-		sinValue = np.sin(np.pi + np.pi * 0.5 * (timeWithinPeriod - risingDuration) / fallingDuration) + 1.0
+		if fallingDuration == 0:
+			sinValue = 0
+		else:
+			sinValue = np.sin(np.pi + np.pi * 0.5 * (timeWithinPeriod - risingDuration) / fallingDuration) + 1.0
 	
 	# Scale the value from 0..1 -> differentialMin..differentialMax
 	scaledValue = config.differentialMin + sinValue * (config.differentialMax - config.differentialMin)
