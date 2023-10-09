@@ -34,8 +34,8 @@ A few quick examples to get the general idea.
             - `CONTINUOUS_LEVEL`: `1300`-`1999`. Integer.
             - `MIN`: `1300`-`1999`; For the differential mode. Integer
             - `MAX`: `1300`-`1999`; For the differential mode. Integer.
-            - `PERIOD`: `int`; The duration in seconds per cycle. Integer.
-            - `RATIO`: `0`-`1`; Float.
+            - `PERIOD`: `float`; The duration in seconds per cycle. Float.
+            - `RATIO`: `0.0`-`1.0`; The point at which the level reaches its maximum, percentage of the period. Float.
 - `box01/motor/config/out`
     - Largely the same as the previous. Data remains in the same format as well. Currently, the idea is that the Motor Controller will broadcast its current configuration in case other components need to know what it's current operating conditions are. <!--This was one I'm not sure we wanted to keep(?)-->
 - `box01/motor/command/in`
