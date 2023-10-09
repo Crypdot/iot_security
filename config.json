@@ -1,5 +1,5 @@
 {
-    "mqttBrokerHost": "192.168.1.204",
+    "mqttBrokerHost": "172.28.154.220",
     "mqttBrokerPort": 1883,
     "mqttTopicSineWave": "sineWaveData",
     "mqttTopicPumpControl": "pumpControl"
