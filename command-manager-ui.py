@@ -1,15 +1,15 @@
-import json
+import os
+from dotenv import load_dotenv
 import tkinter as tk
 import paho.mqtt.client as mqtt
 
-with open('config.json', 'r') as configFile:
-    config = json.load(configFile)
+load_dotenv()
 
 # Parameters for the MQTT broker
-MQTT_BROKER_HOST = config["mqttBrokerHost"]  
-MQTT_BROKER_PORT = config["mqttBrokerPort"]
-MQTT_TOPIC_PUMP_CONFIG = config["mqttTopicPumpConfig"]
-MQTT_TOPIC_PUMP_COMMAND = config["mqttTopicPumpCommand"]
+MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST")
+MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT"))
+MQTT_TOPIC_PUMP_CONFIG = os.getenv("MQTT_TOPIC_PUMP_CONFIG")
+MQTT_TOPIC_PUMP_COMMAND = os.getenv("MQTT_TOPIC_PUMP_COMMAND")
 
 client = mqtt.Client()
 
@@ -96,21 +96,25 @@ class DiffPressureView(tk.Frame):
         self.secondsXLabel = tk.Label(self, text="Rising Period")
         self.secondsXLabel.pack()
         self.secondsXEntry = tk.Entry(self)
+        self.secondsXEntry.insert(0, diffPressurePeriod)
         self.secondsXEntry.pack()
 
         self.secondsYLabel = tk.Label(self, text="Falling Period")
         self.secondsYLabel.pack()
         self.secondsYEntry = tk.Entry(self)
+        self.secondsYEntry.insert(0, diffPressurePeriod)
         self.secondsYEntry.pack()
 
         self.minSpeedLabel = tk.Label(self, text="Minimum Speed")
         self.minSpeedLabel.pack()
         self.minSpeedEntry = tk.Entry(self)
+        self.minSpeedEntry.insert(0, diffPressureMinSpeed)
         self.minSpeedEntry.pack()
 
         self.maxSpeedLabel = tk.Label(self, text="Maximum Speed")
         self.maxSpeedLabel.pack()
         self.maxSpeedEntry = tk.Entry(self)
+        self.maxSpeedEntry.insert(0, diffPressureMaxSpeed)
         self.maxSpeedEntry.pack()
 
         self.okButton = tk.Button(self, text="Confirm", command=self.onOKButtonClick)
