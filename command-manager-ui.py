@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
-import tkinter as tk
 import paho.mqtt.client as mqtt
+import tkinter as tk
 
 load_dotenv()
 
@@ -13,12 +13,6 @@ MQTT_TOPIC_PUMP_COMMAND = os.getenv("MQTT_TOPIC_PUMP_COMMAND")
 
 client = mqtt.Client()
 
-def onConnect(client, userdata, flags, rc):
-    if rc == 0:
-        print(f"Connected to MQTT Broker at: {MQTT_BROKER_HOST}")
-    else:
-        print("Connection to MQTT Broker failed")
-
 """
 Default values for the different variables needed to command the pump.
 """
@@ -28,6 +22,15 @@ diffPressureMinSpeed: int = 1300
 diffPressureMaxSpeed: int = 1999
 contPressureSpeed: int = 1500
 pumpOperatingMode: int = 1
+
+"""
+Callback function called when the connection to the MQTT broker is established.
+"""
+def onConnect(client, userdata, flags, rc):
+    if rc == 0:
+        print(f"Connected to MQTT Broker at: {MQTT_BROKER_HOST}")
+    else:
+        print("Connection to MQTT Broker failed")
 
 """
 Creates the main view presented to the user, containing the views for configuring both of the current modes we have available to us.
@@ -74,8 +77,8 @@ class MainView(tk.Frame):
 Creates the view for the differential pressure configuration. Inputs are as follows:
 - Rising duration: float
 - Falling duration: float
-- Minimum motor speed: int; between 1200 and 1999
-- Maximum motor speed: int; between 1200 and 1999; cannot be below the minimum.
+- Minimum motor speed: int; between 1300 and 1999
+- Maximum motor speed: int; between 1300 and 1999; cannot be below the minimum.
 
 Failure to input the correct settings will result in an error.
 
@@ -179,6 +182,8 @@ class DiffPressureView(tk.Frame):
             self.resultLabel.config(text="Values successfully processed.")
         except ValueError:
             self.resultLabel.config(text="Error: Please enter valid values.")
+        except Exception as e:
+            print("An unexpected error occurred: " + str(e))
 
     def showMainView(self):
         self.pack_forget()
@@ -186,7 +191,7 @@ class DiffPressureView(tk.Frame):
 
 """
 Creates the view for the continuous pressure configuration. Inputs are as follows:
-- Desired motor speed: int; between 1200 and 1999
+- Desired motor speed: int; between 1300 and 1999
 
 Currently, the purpose of the continuous pressure mode will be to simply maintain a specific speed indefinitely.
 Future variables may be introduced if necessary.
@@ -221,8 +226,8 @@ class ContinuousPressureView(tk.Frame):
         global contPressureSpeed
         try:
             contPressureSpeed = int(self.continuousPressureEntry.get())
-            if contPressureSpeed < 1300 or contPressureSpeed >= 2000:
-                self.resultLabel.config(text="The value must be an integer between 1300 and 2000.")
+            if contPressureSpeed < 1300 or contPressureSpeed >= 1999:
+                self.resultLabel.config(text="The value must be an integer between 1300 and 1999.")
                 return
             
             pumpOperatingMode = 0
@@ -234,10 +239,20 @@ class ContinuousPressureView(tk.Frame):
             self.resultLabel.config(text="Values successfully processed.")
         except ValueError:
             self.resultLabel.config(text="Error: Please enter a valid integer value.")
+        except Exception as e:
+            print("An unexpected error occurred: " + str(e))
 
     def showMainView(self):
         self.pack_forget()
         MainView.pack()
+
+"""
+Closing Tkinter window calls this function.
+Gracefully disconnect the MQTT client and close the Tkinter window.
+"""
+def onClosing():
+    client.disconnect()
+    root.quit()
 
 if __name__ == "__main__":
     client.on_connect = onConnect
@@ -246,6 +261,9 @@ if __name__ == "__main__":
     # Create the main window
     root = tk.Tk()
     root.title("Beta Version for the Command Manager")
+
+    # Bind closing function to the window closing
+    root.protocol("WM_DELETE_WINDOW", onClosing)
 
     # Create instances of the views
     MainView = MainView(root)
