@@ -6,7 +6,6 @@ import requests
 load_dotenv()
 
 # Parameters for the MQTT broker
-BOX_ID = os.getenv("BOX_ID")
 MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT"))
 
@@ -22,13 +21,15 @@ DATABASE_PORT = 8086
 influx_url = f"http://{DATABASE_HOST}:{DATABASE_PORT}/write?db={DATABASE_NAME}"
 
 """
-Subscribed topics are parsed through and relevant types are forwarded to the database
+Subscribed topics are parsed through and relevant types are forwarded to the database.
 """
 def onMessage(client, userdata, message):
     topic = (message.topic).split("/")
     value = message.payload
 
-    if topic[2] not in ["config", "command"]:
+    topicFilter = ["config", "command"]
+
+    if topic[2] not in topicFilter:
         publishToInflux(topic, float(value))
 
 """
@@ -54,7 +55,7 @@ if __name__ == "__main__":
 
     client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
 
-    # Only "out" data is relevant. Pound (#) wildcards must be the last level --> must use +
+    # Only "out" data is relevant. '#' wildcards must be at last level --> must use '+' in this case
     MQTT_TOPIC = "+/+/+/out/"
     client.subscribe(MQTT_TOPIC)
 
