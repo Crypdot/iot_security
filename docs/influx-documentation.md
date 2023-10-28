@@ -1,7 +1,33 @@
 ## Setting-up InfluxDB
 
+### Quick guide
+1. Install and start influxdb:
+ * `sudo apt install influxdb`
+ * `sudo service influxdb start`
+
+2. Create a database
+ * `curl -i -XPOST http://localhost:8086/query --data-urlencode "q=CREATE DATABASE mqtt"`
+ * This creates a database named "mqtt". If not done from the machine hosting influxdb, replace "localhost" with approriate IP address.
+
+3. Modify influx configuration
+ * Path `/etc/influxdb/influxdb.conf`, remeber to uncomment changed lines
+ * modify `auth-enabled = false` to `true`
+ * modify `shared-secret = "mqtt-security"`
+ * Save and restart influx service (systemctl or restart machine)
+
+4. Create admin user and a specific user for the database
+ * Either install `influxdb-client` or use HTTP requests
+ * Use influx CLI: `sudo influx`
+ * Select your database: `> USE mqtt`
+ * NOTE, must use single quotes when writing passwords!
+ * Create admin user with all privileges: `> CREATE USER admin WITH PASSWORD 'admin' WITH ALL PRIVILEGES`
+ * Create normal user with write privileges: `> CREATE USER python WITH PASSWORD 'password`
+ * Grant privileges to normal user: `> GRANT WRITE ON "mqtt" TO "python"`
+
+
 ### Installing influxdb
 `sudo apt install influxdb`
+
 `sudo service influxdb start`
 
 ### Creating a database
@@ -9,6 +35,13 @@
 
 Or just make the request with the browser of your choise:
 `http://localhost:8086/query?q=CREATE%20DATABASE%20<database name>`
+
+#### Retention policy
+The InfluxDB retention enforcement service checks for and removes data with timestamps beyond the defined retention period. A retention policy can be added to a database when creating it: `WITH DURATION <time>`
+
+e.g.: `q=CREATE DATABASE <database name> WITH DURATION 14d`
+
+This would create a database that stores data for 14 days. 
 
 ## Using Influx
 Influx runs on the port 8086, and it can be used entirely from the influx API. 
@@ -39,7 +72,6 @@ Change line `auth-enabled = false`, to true and uncommen it. It's found under [h
 #### Creating users
 After authentication is enabled, users need to be created. 
 
-Use the wanted database with: `USE <database name>`
 
 Using influx-cli, create admin user with all privileges: `CREATE USER admin WITH PASSWORD '<password>' WITH ALL PRIVILEGES`
 
