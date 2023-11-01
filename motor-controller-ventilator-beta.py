@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import pigpio
 
 load_dotenv()
-###########################
+
 class PCA9685:
 	'''
 	PWM motor controler using PCA9685 boards.
@@ -78,7 +78,6 @@ class PiGPIO_PWM():
 
 	def run(self, pulse):
 		self.set_pulse(pulse)
-###########################
 
 @dataclass
 class MotorStatus:
@@ -302,7 +301,10 @@ def getMotorConfigMQTTString() -> str:
 	global config
 	return str(int(config.mode)) + "," + str(config.continuousLevel) + "," + str(config.differentialMin) + "," + str(config.differentialMax) + "," + str(config.differentialPeriod) + "," + str(config.differentialRatio)
 
-###########################
+"""
+Sets the current PWM value to a given value; these should be between 1300 and 1999. 
+The default value for the 'pwm_gpio' is 13, as that's where the motor is attached on the board.
+"""
 def set_pwm_value(pwm_value, pwm_gpio=13):
 	"""
 	Send a pwm value to the esc between 1000-2000
@@ -311,7 +313,6 @@ def set_pwm_value(pwm_value, pwm_gpio=13):
 	:param pwm_value: int | str
 	"""
 	pin = int(pwm_gpio)
-	#print("Using PWM GPIO {}".format(pin))
 	p = pigpio.pi()  # Init Pi's HW PWM and timers
 	if not p.connected:
 		exit()
@@ -322,10 +323,11 @@ def set_pwm_value(pwm_value, pwm_gpio=13):
 		c.run(pmw)
 	except Exception as ex:
 		print("Oops, {}".format(ex))
-
+"""
+Stops the PWM service; stops the motor.
+"""
 def stop_pwm_service(pwm_gpio=13):
 	print("!!!Stopping pwm service!!!")
-
 	p = pigpio.pi()  # Init Pi's HW PWM and timers
 	pin = int(pwm_gpio)
 
@@ -344,7 +346,6 @@ def stop_pwm_service(pwm_gpio=13):
 	c.run(1000)
 
 	print("!!!Pwm service successfully stopped!!!")
-###########################
 
 """
 Main function: establishes connection to the MQTT broker,
