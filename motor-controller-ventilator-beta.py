@@ -9,76 +9,75 @@ import pigpio
 load_dotenv()
 ###########################
 class PCA9685:
-    '''
-    PWM motor controler using PCA9685 boards.
-    This is used for most RC Cars
+	'''
+	PWM motor controler using PCA9685 boards.
+	This is used for most RC Cars
 
-    https://github.com/autorope/donkeycar
+	https://github.com/autorope/donkeycar
 
-    donkeycar/donkeycar/parts/actuator.py
-    '''
+	donkeycar/donkeycar/parts/actuator.py
+	'''
 
-    def __init__(self, channel, address=0x6f, frequency=60, busnum=None, init_delay=0.1):
+	def __init__(self, channel, address=0x6f, frequency=60, busnum=None, init_delay=0.1):
+		self.default_freq = 60
+		self.pwm_scale = frequency / self.default_freq
 
-        self.default_freq = 60
-        self.pwm_scale = frequency / self.default_freq
+		import Adafruit_PCA9685
+		# Initialise the PCA9685 using the default address (0x40).
+		if busnum is not None:
+			from Adafruit_GPIO import I2C
+			# replace the get_bus function with our own
+			def get_bus():
+				return busnum
 
-        import Adafruit_PCA9685
-        # Initialise the PCA9685 using the default address (0x40).
-        if busnum is not None:
-            from Adafruit_GPIO import I2C
-            # replace the get_bus function with our own
-            def get_bus():
-                return busnum
+			I2C.get_default_bus = get_bus
+		self.pwm = Adafruit_PCA9685.PCA9685(address=address)
+		self.pwm.set_pwm_freq(frequency)
+		self.channel = channel
+		time.sleep(init_delay)  # "Tamiya TBLE-02" makes a little leap otherwise
 
-            I2C.get_default_bus = get_bus
-        self.pwm = Adafruit_PCA9685.PCA9685(address=address)
-        self.pwm.set_pwm_freq(frequency)
-        self.channel = channel
-        time.sleep(init_delay)  # "Tamiya TBLE-02" makes a little leap otherwise
+	def set_pulse(self, pulse):
+		try:
+			self.pwm.set_pwm(self.channel, 0, int(pulse * self.pwm_scale))
+		except:
+			self.pwm.set_pwm(self.channel, 0, int(pulse * self.pwm_scale))
 
-    def set_pulse(self, pulse):
-        try:
-            self.pwm.set_pwm(self.channel, 0, int(pulse * self.pwm_scale))
-        except:
-            self.pwm.set_pwm(self.channel, 0, int(pulse * self.pwm_scale))
-
-    def run(self, pulse):
-        self.set_pulse(pulse)
+	def run(self, pulse):
+		self.set_pulse(pulse)
 
 class PiGPIO_PWM():
-    '''
-    # Use the pigpio python module and daemon to get hardware pwm controls from
-    # a raspberrypi gpio pins and no additional hardware. Can serve as a replacement
-    # for PCA9685.
-    #
-    # This class can also be used when using the Grove Base Hat. It's PWM port is just
-    # connected to the raspberry pi's gpio pins (12,13)
-    #
-    # Install and setup:
-    # sudo update && sudo apt install pigpio python3-pigpio
-    # sudo systemctl start pigpiod
-    #
-    # Note: the range of pulses will differ from those required for PCA9685
-    # and can range from 12K to 170K
-    '''
+	'''
+	# Use the pigpio python module and daemon to get hardware pwm controls from
+	# a raspberrypi gpio pins and no additional hardware. Can serve as a replacement
+	# for PCA9685.
+	#
+	# This class can also be used when using the Grove Base Hat. It's PWM port is just
+	# connected to the raspberry pi's gpio pins (12,13)
+	#
+	# Install and setup:
+	# sudo update && sudo apt install pigpio python3-pigpio
+	# sudo systemctl start pigpiod
+	#
+	# Note: the range of pulses will differ from those required for PCA9685
+	# and can range from 12K to 170K
+	'''
 
-    def __init__(self, pin, pgio=None, freq=75):
-        import pigpio
+	def __init__(self, pin, pgio=None, freq=75):
+		import pigpio
 
-        self.pin = pin
-        self.pgio = pgio or pigpio.pi()
-        self.freq = freq
-        self.pgio.set_mode(self.pin, pigpio.OUTPUT)
+		self.pin = pin
+		self.pgio = pgio or pigpio.pi()
+		self.freq = freq
+		self.pgio.set_mode(self.pin, pigpio.OUTPUT)
 
-    def __del__(self):
-        self.pgio.stop()
+	def __del__(self):
+		self.pgio.stop()
 
-    def set_pulse(self, pulse):
-        self.pgio.set_servo_pulsewidth(self.pin, pulse)
+	def set_pulse(self, pulse):
+		self.pgio.set_servo_pulsewidth(self.pin, pulse)
 
-    def run(self, pulse):
-        self.set_pulse(pulse)
+	def run(self, pulse):
+		self.set_pulse(pulse)
 ###########################
 
 @dataclass
@@ -305,44 +304,44 @@ def getMotorConfigMQTTString() -> str:
 
 ###########################
 def set_pwm_value(pwm_value, pwm_gpio=13):
-    """
-    Send a pwm value to the esc between 1000-2000
+	"""
+	Send a pwm value to the esc between 1000-2000
 
-    :param pwm_gpio:
-    :param pwm_value: int | str
-    """
-    pin = int(pwm_gpio)
-    #print("Using PWM GPIO {}".format(pin))
-    p = pigpio.pi()  # Init Pi's HW PWM and timers
-    if not p.connected:
-        exit()
-    c = PiGPIO_PWM(pin, p)
+	:param pwm_gpio:
+	:param pwm_value: int | str
+	"""
+	pin = int(pwm_gpio)
+	#print("Using PWM GPIO {}".format(pin))
+	p = pigpio.pi()  # Init Pi's HW PWM and timers
+	if not p.connected:
+		exit()
+	c = PiGPIO_PWM(pin, p)
 
-    try:
-        pmw = int(pwm_value)
-        c.run(pmw)
-    except Exception as ex:
-        print("Oops, {}".format(ex))
+	try:
+		pmw = int(pwm_value)
+		c.run(pmw)
+	except Exception as ex:
+		print("Oops, {}".format(ex))
 
 def stop_pwm_service(pwm_gpio=13):
 	print("!!!Stopping pwm service!!!")
 
-    p = pigpio.pi()  # Init Pi's HW PWM and timers
-    pin = int(pwm_gpio)
+	p = pigpio.pi()  # Init Pi's HW PWM and timers
+	pin = int(pwm_gpio)
 
-    if not p.connected:
-        exit()
-    c = PiGPIO_PWM(pin)
+	if not p.connected:
+		exit()
+	c = PiGPIO_PWM(pin)
 
-    c.run(1000)
+	c.run(1000)
 
-    time.sleep(1)
+	time.sleep(1)
 
-    del c
+	del c
 
-    c = PiGPIO_PWM(pin)
+	c = PiGPIO_PWM(pin)
 
-    c.run(1000)
+	c.run(1000)
 
 	print("!!!Pwm service successfully stopped!!!")
 ###########################
