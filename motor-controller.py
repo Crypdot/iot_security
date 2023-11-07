@@ -65,8 +65,11 @@ The message is validated, and if validation passes, the new values are stored to
 def onMotorConfig(client, userdata, msg):
 	try:
 		newConfig = validateConfig(msg.payload.decode())
+	except ValueError as e:
+		print("Invalid configuration values: " + str(e))
+		return
 	except Exception as e:
-		print("Invalid configuration: " + str(e))
+		print("An unexpected error occurred: " + str(e))
 		return
 	
 	global config
@@ -83,7 +86,7 @@ Takes a string and checks if it's a correctly formatted list of comma separated 
 If the string and the values it contains are valid, it returns an array of those values cast into correct data types.
 Otherwise an exception is thrown.
 """
-def validateConfig(commaSeparatedValues):
+def validateConfig(commaSeparatedValues) -> list:
 	try:
 		fields = commaSeparatedValues.split(",")
 		config = [
@@ -94,8 +97,10 @@ def validateConfig(commaSeparatedValues):
 			round(float(fields[4]), 2),
 			round(float(fields[5]), 2)
 		]
-	except:
-		raise ValueError("Missing or non-numeric config value")
+	except ValueError as e:
+		raise ValueError(e)
+	except Exception as e:
+		raise Exception(e)
 	
 	if config[0] != 0 and config[0] != 1:
 		raise ValueError(f"Invalid mode: {config[0]}")
@@ -129,17 +134,22 @@ Stays in a loop, and while the motor is running, sends a value to the MQTT broke
 """
 def controlLoop():
 	global status
-	while True:
-		if status.running:
-			status.speed = getMotorSpeed(config.mode)
-			printMotorSpeed()
+	try:
+		while True:
+			if status.running:
+				status.speed = getMotorSpeed(config.mode)
+				printMotorSpeed()
 
-			client.publish(MQTT_TOPIC_MOTOR_SPEED_OUT, str(status.speed))
-			client.publish(MQTT_TOPIC_MOTOR_CONFIG_OUT, getMotorConfigMQTTString())
-			client.publish(MQTT_TOPIC_MOTOR_COMMAND_OUT, getMotorStatusMQTTString())
+				client.publish(MQTT_TOPIC_MOTOR_SPEED_OUT, str(status.speed))
+				client.publish(MQTT_TOPIC_MOTOR_CONFIG_OUT, getMotorConfigMQTTString())
+				client.publish(MQTT_TOPIC_MOTOR_COMMAND_OUT, getMotorStatusMQTTString())
 
-		# The value is sent once every interval, sleep in between
-		time.sleep(LOOP_INTERVAL)
+			# The value is sent once every interval, sleep in between
+			time.sleep(LOOP_INTERVAL)
+	except KeyboardInterrupt:
+		client.disconnect()
+	except Exception as e:
+		print("An unexpected error occurred: " + str(e))
 
 """
 Selects the motor's value based on its operating mode.
@@ -167,14 +177,14 @@ def printMotorSpeed():
 """
 Returns the motor's speed in continuous mode.
 """
-def getContinuousSpeed():
+def getContinuousSpeed() -> int:
 	global config
 	return config.continuousLevel
 
 """
 Returns the motor's speed in differential mode.
 """
-def getDifferentialSpeed():
+def getDifferentialSpeed() -> int:
 	global config
 
 	timeWithinPeriod = time.time() % config.differentialPeriod
@@ -201,14 +211,14 @@ def getDifferentialSpeed():
 """
 Returns the motor's status as a string formatted for MQTT channel.
 """
-def getMotorStatusMQTTString():
+def getMotorStatusMQTTString() -> str:
 	global status
 	return str(int(status.running)) + "," + str(status.speed)
 
 """
 Returns the motor's config as a string formatted for MQTT channel.
 """
-def getMotorConfigMQTTString():
+def getMotorConfigMQTTString() -> str:
 	global config
 	return str(int(config.mode)) + "," + str(config.continuousLevel) + "," + str(config.differentialMin) + "," + str(config.differentialMax) + "," + str(config.differentialPeriod) + "," + str(config.differentialRatio)
 
