@@ -4,7 +4,16 @@ import sys
 import os
 import requests
 
-load_dotenv()
+"""
+Checks that the configuration file exists. 
+TODO: functionality to create and initialize .env file. 
+"""
+def checkEnv():
+    if os.path.exists(".env"):
+        load_dotenv()
+    else:
+        raise FileNotFoundError(".env does not exist.")
+
 
 """
 This script starts a new subprocess for each of the wanted scripts. The paths are defined and then executed using the Python interpreter currently running the script. 
@@ -54,5 +63,11 @@ def sendHttpRequest():
         print(f"Unsuccessful, response: {response}")
 
 if __name__ == "__main__":
-    startup()
-    sendHttpRequest()
+    try:
+        checkEnv()
+        startup()
+        sendHttpRequest()
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+    except Exception as e:
+        print(f"Error: {e}")
