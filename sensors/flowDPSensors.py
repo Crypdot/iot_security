@@ -24,6 +24,7 @@ parser = argparse.ArgumentParser(description="A script to be run for the sensors
 parser.add_argument("-si", type=str, required=True, help="The sensor's ID. The channel this sensor posts on will depend on this name. Name this based on the sensor; fe: 'flowrateSensor01'")
 parser.add_argument("-bi", type=str, required=True, help="The box's ID. The channel this sensor posts on will depend on this name. Name this based on the box; fe: 'box01'")
 parser.add_argument("-cp", type=str, required=True, help="The USB port. Check which port this sensor is attached to, so that it knows where to get the right data from; fe: '/dev/ttyUSB0'. Note that it may be 'ACM0' as well. Check using 'dmesg -w' before use.")
+parser.add_argument("-m", type=int, required=True, help="A toggle between the 'flow' and 'differential pressure' modes. '0' indicates flow, '1' for differential pressure.")
 #parser.add_argument("-i", type=int, default=1, help="Something very helpful regarding integers, for sure.")
 
 """
@@ -32,21 +33,30 @@ Configures the sensor to run as indicated by the arguments given.
 TODO :: Possibly adding an additional argument to toggle between flow- and DP-modes, so that the user can simply indicate the type of sensor on runtime?
 """
 def setup():
-   global boxID, sensorID, flowChannel, dpChannel, sensorSerialPort
+   global boxID, sensorID, channel, sensorSerialPort, operatingMode
    
    args = parser.parse_args()
    boxID = args.bi
    sensorID = args.si
-   sensorPort = args.cp
-   flowChannel = boxID+"/"+sensorID+MQTT_TOPIC_SENSOR_FLOW_OUT
-   dpChannel = boxID+"/"+sensorID
-
+   print("Configuring operating modes . . .")
+   if args.m == 0:
+      operatingMode = "flowMode"
+      channel = boxID+"/"+sensorID+MQTT_TOPIC_SENSOR_FLOW_OUT
+   else: 
+      operatingMode = "diffMode"
+      channel = boxID+"/"+sensorID
+   
+   print(f"{operatingMode} set.")
+   
    """
    Configures the serial port to listen to the arduino. 
    NOTE :: This *should* be "USB0", but it may be "USB1" or "ACM0"; check the port. On Windows, "COM" ports are also possible.
    """
    print("\nConfiguring Serial Ports")
-   sensorSerialPort = sensorPort
+   sensorSerialPort = args.cp
+
+   # Print configuration
+   print(f"Box ID :: {boxID}\nSensor ID :: {sensorID}\nSensor Port :: {sensorSerialPort}\nOperating mode :: {operatingMode}\nPublishing to channel :: {channel}")
 
 # Process Messages
 def onConnect(client, metadata, flags, rc):
@@ -64,13 +74,13 @@ def publishError(message):
 
 def publishFlow(client, channel, value):
    try:
-      dataString = value.decode("UTF-8").strip()
-      dataString = dataString[0:-1]  
-      if "Error" in dataString:
-         print(f"Data contains an error. Ignoring it. {dataString}")    
+      data = value.decode("UTF-8").strip()
+      if "Error" in data or "E():" in data:
+         print(f"Data contains an error. Ignoring it. {data}")    
       else:
-         print(f"Publishing '{dataString}' to '{channel}'")
-         client.publish(channel, dataString)
+         flowrate = data[0:-1]  
+         print(f"Publishing '{flowrate}' to '{channel}'")
+         client.publish(channel, flowrate)
    except Exception as error:
       print(f"Something went wrong :: {error}")
 
@@ -93,15 +103,14 @@ def publishDP(client, channel, value):
       print(f"Something went wrong :: {error}")
 
 # Run starts here
-
 setup()
 
-print("Ventilator Test Code") 
-
-print("Flow rate in SLM (standard litre per minute)\n"+
-"Differential pressure in Pascals,  1atm = 101Pa. 1cmH20 = 98 Pa, typical CPAP range 4-20\n"+
-"Temperature in Celcius\n")
-
+"""
+===Ventilator Test Code===
+Flow rate in SLM (standard litre per minute)
+Differential pressure in Pascals,  1atm = 101Pa. 1cmH20 = 98 Pa, typical CPAP range 4-20
+Temperature in Celcius
+"""
 client = mqtt.Client()
 client.on_connect = onConnect
 client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, keepalive=60, bind_address="")
@@ -140,8 +149,11 @@ Flow rate into continuous mode, then DP into continuous mode.
 NOTE :: Currently this needs to be toggled between reading the flow- and differential pressure sensors separately.
 """
 print("Setting the sensors into continuous mode")
-#sensor.write("1".encode())
-sensor.write("3".encode())
+
+if operatingMode == "flowMode":
+   sensor.write("1".encode())
+elif operatingMode == "diffMode":
+   sensor.write("3".encode())
 
 print("Running . . . ")
 
@@ -149,18 +161,20 @@ sensor.flushInput()
 sensor.flushOutput()
 try: 
    while True:
-      #Requests the Flow sensor's data
-      #sensor.write("f".encode())
-      #publishFlow(client,flowChannel,sensor.readline())
-      #sensor.flushInput()
-      #sensor.flushOutput()
+      if operatingMode == "flowMode":
+         #Requests the Flow sensor's data
+         sensor.write("f".encode())
+         publishFlow(client,channel,sensor.readline())
 
-      # Requests the DP sensor's data
-      sensor.write("d".encode())
-      publishDP(client,dpChannel,sensor.readline())
+         sensor.flushInput()
+         sensor.flushOutput()
+      elif operatingMode == "diffMode":
+         # Requests the DP sensor's data
+         sensor.write("d".encode())
+         publishDP(client,channel,sensor.readline())
 
-      sensor.flushInput()
-      sensor.flushOutput()
+         sensor.flushInput()
+         sensor.flushOutput()
       time.sleep(SAMPLE_RATE)
 except KeyboardInterrupt:
    client.disconnect()
