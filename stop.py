@@ -2,8 +2,8 @@ import psutil
 import os
 
 """
-Script used to terminate all the processes listed in 'pids.txt'
-Removes 'pids.txt' after completion. Does nothing if 'pids.txt' does not excist. 
+Script used to terminate all the processes listed in 'pids.txt'. 
+Removes 'pids.txt' after completion. Does nothing if 'pids.txt' does not exist. 
 """
 FILEPATH = "pids.txt"
 

@@ -7,7 +7,7 @@ import requests
 load_dotenv()
 
 """
-This script starts a new subprocess for each of the wanted scripts. The paths are defined and then executed using the Python interpreter currently running the script.
+This script starts a new subprocess for each of the wanted scripts. The paths are defined and then executed using the Python interpreter currently running the script. 
 Each script's output is discarded (using /dev/null). These could be directed to a file for example, by giving the 'stdout' an open file. 
 
 Each process ID is saved to a file. These are used by 'stop.py' to terminate the processes. 
@@ -38,9 +38,9 @@ def startup():
 
 """
 HTTP request to initiate the TPM authentication. 
-WIP.
+WIP. 
 """
-def send_http_request():
+def sendHttpRequest():
     url = os.getenv("HTTP_HOST")
 
     try:
@@ -55,4 +55,4 @@ def send_http_request():
 
 if __name__ == "__main__":
     startup()
-    send_http_request()
+    sendHttpRequest()
