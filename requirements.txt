@@ -2,3 +2,4 @@ numpy==1.26.0
 paho-mqtt==1.6.1
 pyserial==3.5
 python-dotenv==1.0.0
+matplotlib==3.8.0
