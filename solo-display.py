@@ -45,22 +45,8 @@ def pressureMessage(client, userdata, message):
         pressureList.pop(0)
 
 """
-Creates a matplotlib animation of line graph, using the list of values. Animation function uses one argument, 
+Creates a matplotlib animation of line graphs and values. Animation function passes one argument. 
 """
-def animateGraph(i):
-    plt.cla() # Clear the figure
-    plt.plot(range(len(speedList)), speedList, marker="") # Place new data on figure
-    
-    # Labeling the figure
-    plt.xlabel("Time")
-    plt.ylabel("Value")
-    plt.title(BOX_ID)
-    plt.xticks([]) # Remove X-axis values
-
-    # Set the min-max values that will always be shown
-    plt.ylim(1250, 2049)
-    plt.xlim(0, speedSize + 10)
-
 def animateGraphs(i):
     ax1.clear()
     ax1.plot(range(len(speedList)), speedList, marker="")
@@ -124,7 +110,6 @@ if __name__ == "__main__":
     ani = FuncAnimation(fig, animateGraphs, interval=50, frames=20)
     fig.suptitle(BOX_ID, fontsize=24)
     try:
-        plt.tight_layout()
         plt.show()
     except KeyboardInterrupt:
         client.disconnect()
