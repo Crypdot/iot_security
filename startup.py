@@ -30,17 +30,20 @@ def startup():
         command_manager_ui = os.path.join(directory, "command-manager-ui.py")
         motor_controller = os.path.join(directory, "motor-controller.py")
         solo_display = os.path.join(directory, "solo-display.py")
+        outflowSensorScript = os.path.join(directory+"/sensors/flowDPSensors.py")
 
         # Starting new processes. Output directed to /dev/null
         manager_process = subprocess.Popen([sys.executable, command_manager_ui], cwd=directory, stdout=subprocess.DEVNULL)
         controller_process = subprocess.Popen([sys.executable, motor_controller], cwd=directory, stdout=subprocess.DEVNULL)
         display_process = subprocess.Popen([sys.executable, solo_display], cwd=directory, stdout=subprocess.DEVNULL)
+        outflowSensorProcess = subprocess.Popen([sys.executable, outflowSensorScript, "-si", "outFlow01", "-bi", "box01", "-cp", "/dev/ttyUSB0", "-m", "fo"], cwd=directory, stdout=subprocess.PIPE)
 
         # Writing process IDs to a file
         with open("pids.txt", "w") as file:
             file.write(f"{manager_process.pid}\n")
             file.write(f"{controller_process.pid}\n")
             file.write(f"{display_process.pid}\n")
+            file.write(f"{outflowSensorProcess.pid}\n")
 
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")

@@ -12,10 +12,12 @@ MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT"))
 
 SPEED_TOPIC = f"{BOX_ID}/+/speed/out/" # Topic for the speed graph
-PRESSURE_TOPIC = f"{BOX_ID}/+/pressure/out/" # Topic for the pressure graph
-FLOW_TOPIC = f"{BOX_ID}/+/flow/out/" # Topic for flow numbers
-
+PRESSURE_TOPIC = f"{BOX_ID}/+/diffPressure/out/" # Topic for the pressure graph
+INFLOW_TOPIC = f"{BOX_ID}/+/inflowRate/out" # Topic for inflow numbers
+OUTFLOW_TOPIC = f"{BOX_ID}/+/outflowRate/out/" # Topic for the outflow numbers
 plt.rcParams['toolbar'] = 'None'
+
+print(OUTFLOW_TOPIC)
 
 # Motor's speed values are stored in this list
 speedList = []
@@ -38,12 +40,17 @@ def speedMessage(client, userdata, message):
     if len(speedList) > speedSize:
         speedList.pop(0)
 
-def flowMessage(client, userdata, message):
+def inflowMessage(client, userdata, message):
+    print("INFLOW MESSAGE RECEIVED")
     global flowInValue
-    flowInValue = int(message.payload)
+    flowInValue = float(message.payload)
+def outflowMessage(client, userdata, message):
+    global flowOutValue
+    print(f"OUTFLOW :: {float(message.payload)}")
+    flowOutValue = float(message.payload)
 
 def pressureMessage(client, userdata, message):
-    value = int(message.payload)
+    value = float(message.payload)
     pressureList.append(value)
     if len(pressureList) > pressureSize:
         pressureList.pop(0)
@@ -81,7 +88,7 @@ def animateGraphs(i):
     # Flow numbers
     ax3.clear()
     ax3.text(0, 1, f"Flow in: {flowInValue}", fontsize=24)
-    ax3.text(0, 0.5, f"Flow out: {flowInValue}", fontsize=24)
+    ax3.text(0, 0.5, f"Flow out: {flowOutValue}", fontsize=24)
     ax3.set_xticks([])
     ax3.set_yticks([])
 
@@ -101,9 +108,9 @@ if __name__ == "__main__":
     # Subscribe to the box's topic and bind different topics to functions
     client.subscribe([(f"{BOX_ID}/+/+/+/", 1)])
     client.message_callback_add(SPEED_TOPIC, speedMessage)
-    client.message_callback_add(FLOW_TOPIC, flowMessage)
+    client.message_callback_add(INFLOW_TOPIC, inflowMessage)
+    client.message_callback_add(OUTFLOW_TOPIC, outflowMessage)
     client.message_callback_add(PRESSURE_TOPIC, pressureMessage)
-
     client.loop_start()
 
     # Matplotlib initialization
