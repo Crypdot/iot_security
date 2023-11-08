@@ -11,7 +11,8 @@ load_dotenv()
 # Parameters for the MQTT broker
 MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT"))
-MQTT_TOPIC_SENSOR_FLOW_OUT = os.getenv("MQTT_TOPIC_SENSOR_INFLOW_OUT")
+MQTT_TOPIC_SENSOR_INFLOW_OUT = os.getenv("MQTT_TOPIC_SENSOR_INFLOW_OUT")
+MQTT_TOPIC_SENSOR_OUTFLOW_OUT = os.getenv("MQTT_TOPIC_SENSOR_OUTFLOW_OUT")
 MQTT_TOPIC_SENSOR_DP_OUT = os.getenv("MQTT_TOPIC_SENSOR_DP_OUT")
 MQTT_TOPIC_SENSOR_TEMP_OUT =os.getenv("MQTT_TOPIC_SENSOR_TEMP_OUT")
 SAMPLE_RATE = float(os.getenv("MQTT_SENSOR_SAMPLERATE"))
@@ -24,13 +25,11 @@ parser = argparse.ArgumentParser(description="A script to be run for the sensors
 parser.add_argument("-si", type=str, required=True, help="The sensor's ID. The channel this sensor posts on will depend on this name. Name this based on the sensor; fe: 'flowrateSensor01'")
 parser.add_argument("-bi", type=str, required=True, help="The box's ID. The channel this sensor posts on will depend on this name. Name this based on the box; fe: 'box01'")
 parser.add_argument("-cp", type=str, required=True, help="The USB port. Check which port this sensor is attached to, so that it knows where to get the right data from; fe: '/dev/ttyUSB0'. Note that it may be 'ACM0' as well. Check using 'dmesg -w' before use.")
-parser.add_argument("-m", type=int, required=True, help="A toggle between the 'flow' and 'differential pressure' modes. '0' indicates flow, '1' for differential pressure.")
+parser.add_argument("-m", choices=["fi", "fo", "dp"], required=True, help="Specify an operating mode for the sensor: 'fi' for inflow; 'fo' for outflow; 'dp' for indicating a differential pressure sensor.")
 #parser.add_argument("-i", type=int, default=1, help="Something very helpful regarding integers, for sure.")
 
 """
 Configures the sensor to run as indicated by the arguments given.
-
-TODO :: Possibly adding an additional argument to toggle between flow- and DP-modes, so that the user can simply indicate the type of sensor on runtime?
 """
 def setup():
    global boxID, sensorID, channel, sensorSerialPort, operatingMode
@@ -39,10 +38,13 @@ def setup():
    boxID = args.bi
    sensorID = args.si
    print("Configuring operating modes . . .")
-   if args.m == 0:
-      operatingMode = "flowMode"
-      channel = boxID+"/"+sensorID+MQTT_TOPIC_SENSOR_FLOW_OUT
-   else: 
+   if args.m == "fo":
+      operatingMode = "outflowMode"
+      channel = boxID+"/"+sensorID+MQTT_TOPIC_SENSOR_OUTFLOW_OUT
+   elif args.m == "fi":
+      operatingMode = "inflowMode"
+      channel = boxID+"/"+sensorID+MQTT_TOPIC_SENSOR_INFLOW_OUT
+   elif args.m == "dp": 
       operatingMode = "diffMode"
       channel = boxID+"/"+sensorID
    
@@ -128,29 +130,12 @@ sensor.flushInput()
 sensor.flushOutput()
 
 """
-#print("Inflow")
-#sensor.write("s".encode())
-#sensorSerialNumber = sensor.readline(24)
-#print(f"Flow sensor :: {sensorSerialNumber}")
-
-#sensor.write("e".encode())
-#sensorSerialNumber = sensor.readline(24)
-#print(f"DP sensor :: {sensorSerialNumber}")
-
-sensor.flushInput()
-sensor.flushOutput()
-"""
-
-
-"""
 Flow rate into continuous mode, then DP into continuous mode.
 1 is for setting the flow sensor, 3 is for the differential pressure sensor
-
-NOTE :: Currently this needs to be toggled between reading the flow- and differential pressure sensors separately.
 """
 print("Setting the sensors into continuous mode")
 
-if operatingMode == "flowMode":
+if operatingMode == "inflowMode" or "outflowMode":
    sensor.write("1".encode())
 elif operatingMode == "diffMode":
    sensor.write("3".encode())
@@ -161,8 +146,8 @@ sensor.flushInput()
 sensor.flushOutput()
 try: 
    while True:
-      if operatingMode == "flowMode":
-         #Requests the Flow sensor's data
+      if operatingMode == "inflowMode" or operatingMode == "outflowMode":
+         # Requests the Flow sensor's data
          sensor.write("f".encode())
          publishFlow(client,channel,sensor.readline())
 
