@@ -19,14 +19,14 @@ def checkEnv():
         raise FileNotFoundError(".env does not exist.")
 
 """
-Starts processes based on a list of script-parameter pairs. Scripts are executed using Python interpreter currently running the script. 
+Starts processes based on a list of script-argument pairs. Scripts are executed using Python interpreter currently running the script. 
 Outputs are discarded. 
 Each process ID is saved to a file. These are used by 'stop.py' to terminate the processes. 
 
 Example input:
 processes = [
-    ("script1.py", ["param1"]),
-    ("/directory/script2.py", ["param3", "param4"]),
+    ("script1.py", ["arg1"]),
+    ("/directory/script2.py", ["arg3", "arg4"]),
 ]
 
 Script paths are relative to current directory. 
@@ -37,8 +37,8 @@ def startProcesses(processes: list):
         directory = os.path.dirname(os.path.abspath(__file__))
 
         with open(FILEPATH, "w") as file:
-            for script, parameters in processes:
-                command = [sys.executable, script] + parameters
+            for script, arguments in processes:
+                command = [sys.executable, script] + arguments
                 process = subprocess.Popen(command, cwd=directory, stdout=subprocess.DEVNULL)
                 file.write(f"{process.pid}\n")
 
@@ -65,14 +65,14 @@ def sendHttpRequest():
 if __name__ == "__main__":
 
     processes = [
-        ("command-manager-ui.py", []),
-        ("motor-controller.py", []),
-        ("solo-display.py", [])
+        ("commandManagerUi.py", []),
+        ("motorController.py", []),
+        ("displayManager.py", [])
     ]
 
     try:
         if os.path.exists(FILEPATH):
-            print("Processes already existing.")
+            print("Scripts already running. Restarting...")
             stopProcesses(FILEPATH)
 
         checkEnv()
