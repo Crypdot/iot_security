@@ -98,7 +98,7 @@ def publishDP(client, channel, value):
          temp = str(data[1]).strip()
          
          print(f"Publishing '{pressure}' to '{dpChannel}'")
-         client.publish(dpChannel+"pressure", pressure)
+         client.publish(dpChannel, pressure)
          print(f"Publishing '{temp}' to '{tempChannel}'")
          client.publish(tempChannel, temp)
    except Exception as error:
