@@ -4,30 +4,51 @@ import paho.mqtt.client as mqtt
 import numpy as np
 import time
 from dataclasses import dataclass
+from enum import Enum
 
 load_dotenv()
 
-@dataclass
-class MotorStatus:
-	running: bool = False
-	speed: int = 0
-
-@dataclass
-class MotorConfig:
-	mode: int = 1
-	continuousLevel: int = 1300
-	differentialMin: int = 1300
-	differentialMax: int = 1999
-	differentialPeriod: float = 8.0
-	differentialRatio: float = 0.5
-
-# Parameters for the box's motor
+# Constants for the motor's operation
 BOX_ID = os.getenv("BOX_ID")
 LOOP_INTERVAL = float(os.getenv("MOTOR_LOOP_INTERVAL"))		# seconds
+MIN_SPEED = int(os.getenv("MOTOR_MIN_SPEED"))
+MAX_SPEED = int(os.getenv("MOTOR_MAX_SPEED"))
+MAX_ACCELERATION = int(os.getenv("MOTOR_MAX_ACCELERATION"))	# maximum change of the motor speed in one control loop
+
+class Mode(Enum):
+	CONTINUOUS = 0
+	DIFFERENTIAL = 1
+	SAFE = 99
+
+class MotorStatus:
+	def __init__(self):
+		self.running: bool = False
+		self.speed: int = 0
+
+class ContinuousSettings:
+	def __init__(self):
+		self.level: int = MIN_SPEED
+
+class DifferentialSettings:
+	def __init__(self):
+		self.min: int = int(os.getenv("MOTOR_SAFE_MIN"))
+		self.max: int = int(os.getenv("MOTOR_SAFE_MAX"))
+		self.period: float = float(os.getenv("MOTOR_SAFE_PERIOD"))
+		self.ratio: float = float(os.getenv("MOTOR_SAFE_RATIO"))
+
+class MotorConfig:
+	def __init__(self):
+		self.mode: Mode = Mode(Mode.DIFFERENTIAL.value)
+		self.continuous: ContinuousSettings = ContinuousSettings()
+		self.differential: DifferentialSettings = DifferentialSettings()
+		self.safe: DifferentialSettings = DifferentialSettings()	# same as the differential mode but with default settings
+
+# Parameters for the motor
 status = MotorStatus()
 config = MotorConfig()
+previousSpeed = MIN_SPEED
 
-# Parameters for the MQTT broker
+# Constants for the MQTT broker
 MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT"))
 MQTT_TOPIC_MOTOR_SPEED_OUT = BOX_ID + "/motor/speed/out/"
@@ -74,12 +95,12 @@ def onMotorConfig(client, userdata, msg):
 	
 	global config
 	config.mode = newConfig[0]
-	config.continuousLevel = newConfig[1]
-	config.differentialMin = newConfig[2]
-	config.differentialMax = newConfig[3]
-	config.differentialPeriod = newConfig[4]
-	config.differentialRatio = newConfig[5]
-	print("New motor config stored: \n" + str(config))
+	config.continuous.level = newConfig[1]
+	config.differential.min = newConfig[2]
+	config.differential.max = newConfig[3]
+	config.differential.period = newConfig[4]
+	config.differential.ratio = newConfig[5]
+	print("New motor config stored")
 
 """
 Takes a string and checks if it's a correctly formatted list of comma separated values for the motor's config.
@@ -90,7 +111,7 @@ def validateConfig(commaSeparatedValues) -> list:
 	try:
 		fields = commaSeparatedValues.split(",")
 		config = [
-			int(fields[0]),
+			Mode(int(fields[0])),
 			int(fields[1]),
 			int(fields[2]),
 			int(fields[3]),
@@ -102,13 +123,13 @@ def validateConfig(commaSeparatedValues) -> list:
 	except Exception as e:
 		raise Exception(e)
 	
-	if config[0] != 0 and config[0] != 1:
-		raise ValueError(f"Invalid mode: {config[0]}")
-	elif config[1] < 1300 or config[1] > 1999:
+	#if not (config[0] == 0 or config[0] == 1 or config[0] == 99):
+		#raise ValueError(f"Invalid mode: {config[0]}")
+	if config[1] < MIN_SPEED or config[1] > MAX_SPEED:
 		raise ValueError(f"Invalid continuous level: {config[0]}")
-	elif config[2] < 1300 or config[2] > 1999:
+	elif config[2] < MIN_SPEED or config[2] > MAX_SPEED:
 		raise ValueError(f"Invalid minimum differential level: {config[0]}")
-	elif config[3] < 1300 or config[3] > 1999:
+	elif config[3] < MIN_SPEED or config[3] > MAX_SPEED:
 		raise ValueError(f"Invalid maximum differential level: {config[0]}")
 	elif config[4] <= 0.0:
 		raise ValueError(f"Non-positive differential period: {config[0]}")
@@ -134,10 +155,12 @@ Stays in a loop, and while the motor is running, sends a value to the MQTT broke
 """
 def controlLoop():
 	global status
+	global previousSpeed
 	try:
 		while True:
 			if status.running:
-				status.speed = getMotorSpeed(config.mode)
+				status.speed = limitAcceleration(getMotorSpeed(config.mode), previousSpeed)
+				previousSpeed = status.speed
 				printMotorSpeed()
 
 				client.publish(MQTT_TOPIC_MOTOR_SPEED_OUT, str(status.speed))
@@ -152,13 +175,28 @@ def controlLoop():
 		print("An unexpected error occurred: " + str(e))
 
 """
-Selects the motor's value based on its operating mode.
+Limits the amount of change in the given input speed.
+The returned value can differ from the input at most by MAX_ACCELERATION.
 """
-def getMotorSpeed(mode):
-	if mode == 0:
-		return getContinuousSpeed()
-	elif mode == 1:
-		return getDifferentialSpeed()
+def limitAcceleration(speed: int, previousSpeed: int) -> int:
+	if speed > previousSpeed + MAX_ACCELERATION:
+		return previousSpeed + MAX_ACCELERATION
+	elif speed < previousSpeed - MAX_ACCELERATION:
+		return previousSpeed - MAX_ACCELERATION
+	else:
+		return speed
+
+"""
+Selects the motor's speed value based on its operating mode.
+"""
+def getMotorSpeed(mode: Mode):
+	global config
+	if mode is Mode.CONTINUOUS:
+		return getContinuousSpeed(config.continuous)
+	elif mode is Mode.DIFFERENTIAL:
+		return getDifferentialSpeed(config.differential)
+	elif mode is Mode.SAFE:
+		return getDifferentialSpeed(config.safe)
 
 """
 Visualizes the motor's speed on the command line by drawing a graph, with min, max and speed values visible.
@@ -168,28 +206,25 @@ def printMotorSpeed():
 	global status
 	TOTAL_WIDTH = 40
 	
-	positionPercentage = (status.speed - config.differentialMin) / (config.differentialMax - config.differentialMin)
+	positionPercentage = (status.speed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)
 	lowerPadding = round(TOTAL_WIDTH * positionPercentage)
 	upperPadding = TOTAL_WIDTH - lowerPadding
 
-	print(f"{config.differentialMin} |{' ' * lowerPadding}+{' ' * upperPadding}| {config.differentialMax} [{status.speed}]")
+	print(f"{MIN_SPEED} |{' ' * lowerPadding}+{' ' * upperPadding}| {MAX_SPEED} [{status.speed}]")
 
 """
 Returns the motor's speed in continuous mode.
 """
-def getContinuousSpeed() -> int:
-	global config
-	return config.continuousLevel
+def getContinuousSpeed(settings: ContinuousSettings) -> int:
+	return settings.level
 
 """
 Returns the motor's speed in differential mode.
 """
-def getDifferentialSpeed() -> int:
-	global config
-
-	timeWithinPeriod = time.time() % config.differentialPeriod
-	risingDuration = config.differentialPeriod * config.differentialRatio
-	fallingDuration = config.differentialPeriod - risingDuration
+def getDifferentialSpeed(settings: DifferentialSettings) -> int:
+	timeWithinPeriod = time.time() % settings.period
+	risingDuration = settings.period * settings.ratio
+	fallingDuration = settings.period - risingDuration
 
 	if timeWithinPeriod < risingDuration:
 		# Rising, use 1st quarter of the unit circle
@@ -205,7 +240,7 @@ def getDifferentialSpeed() -> int:
 			sinValue = np.sin(np.pi + np.pi * 0.5 * (timeWithinPeriod - risingDuration) / fallingDuration) + 1.0
 	
 	# Scale the value from 0..1 -> differentialMin..differentialMax
-	scaledValue = config.differentialMin + sinValue * (config.differentialMax - config.differentialMin)
+	scaledValue = settings.min + sinValue * (settings.max - settings.min)
 	return int(scaledValue)
 
 """
@@ -220,7 +255,7 @@ Returns the motor's config as a string formatted for MQTT channel.
 """
 def getMotorConfigMQTTString() -> str:
 	global config
-	return str(int(config.mode)) + "," + str(config.continuousLevel) + "," + str(config.differentialMin) + "," + str(config.differentialMax) + "," + str(config.differentialPeriod) + "," + str(config.differentialRatio)
+	return str(int(config.mode.value)) + "," + str(config.continuous.level) + "," + str(config.differential.min) + "," + str(config.differential.max) + "," + str(config.differential.period) + "," + str(config.differential.ratio)
 
 """
 Main function: establishes connection to the MQTT broker,
