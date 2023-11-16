@@ -133,3 +133,6 @@ HTTPS can easily be configured form the influxdb configuration, once you have a 
 
 More on [Influx documentation](https://docs.influxdata.com/influxdb/v1/administration/https_setup/).
 
+
+### Grafana
+Works pretty much out of the box with InfluxDB. After [installing](https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/) Grafana, add your InfluxDB as a data source. Dashboards are ready inside Grafana.

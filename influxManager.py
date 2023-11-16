@@ -23,6 +23,7 @@ INFLUX_USERNAME = os.getenv("INFLUX_USERNAME")
 
 # Parsed url for API requests
 influx_url = f"http://{DATABASE_HOST}:{DATABASE_PORT}/write?db={DATABASE_NAME}"
+token = ""
 
 """
 Subscribed topics are parsed through and relevant types are forwarded to the database.
@@ -41,23 +42,30 @@ Influx acts as an API. Data can be sent with HTTP POST requests to tables.
 MQTT data is parsed and posted to Influx API. Influx responds with 204 if successful. 
 Authentication implemented with JWT, a shared secret key and configured users with specific privileges.
 Requests by unauthorized users yield the HTTP 403 Forbidden response.
-NOTE: Influx supports some sort of authentication, will look into tokens. 
 """
 def publishToInflux(tags, value):
+    global token
     parsedData = f"{DATABASE_TABLE},box={tags[0]},sensor={tags[1]},type={tags[2]} value={value}"
 
     # JWT token is used to authenticate and publish data. Token is created every time something is published. 
     # TODO: Sign token once and use it. e.g. At start up, token is created for X amount of time and renewed once expired.
-    token = jwt.encode({"username": INFLUX_USERNAME, "exp": (int(time.time()) + 5)}, SECRET_KEY, algorithm="HS256")
+    #token = jwt.encode({"username": INFLUX_USERNAME, "exp": (int(time.time()) + 7200)}, SECRET_KEY, algorithm="HS256")
     headers = {"Authorization": f"Bearer {token}"}
     response = requests.post(influx_url, data=parsedData, headers=headers)
 
     if response.status_code == 204:
         print("Data inserted successfully.")
-    elif response.status_code == 403:
+    elif response.status_code == 401:
         print("Invalid token.")
+        authenticate()
+        publishToInflux(tags, value)
     else:
         print(f"Failed to insert data. Status code: {response.status_code}")
+
+def authenticate():
+    global token
+    print("Authentication token created.")
+    token = jwt.encode({"username": INFLUX_USERNAME, "exp": (int(time.time()) + 5)}, SECRET_KEY, algorithm="HS256")
 
 def controlLoop():
     while True:
@@ -69,10 +77,13 @@ if __name__ == "__main__":
         requests.get(f"http://{DATABASE_HOST}:{DATABASE_PORT}")
 
         client.on_message = onMessage
-        client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
+        client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 0)
 
         # Only "out" data is relevant. '#' wildcards must be at last level --> must use '+' in this case
         MQTT_TOPIC = "+/+/+/out/"
+
+        authenticate()
+
         client.subscribe(MQTT_TOPIC)
 
         client.loop_start()
