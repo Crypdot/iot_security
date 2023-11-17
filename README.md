@@ -97,5 +97,3 @@ You can start the software by running the script ```startup.py```. This will sta
 You can shut off the software simply by running the script ```stop.py```.
 
 ```python stop.py```
-
-```python stop.py```
