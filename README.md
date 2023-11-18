@@ -30,12 +30,17 @@ When you have these, you can build the ventilator.
 
 1.	Connect Raspi into the display and the GPIO extender
 2.	Connect the motor to the ESC and the motor’s power cable.
-3.	Solder breadboards into the jumper wires
-4.	Attach arduinos to the breadboards and jumper wires into sensors.
-5.	Attach arduinos to the RasPi with the micro USB cables.
-6.	Attach motor to the Raspi’s GPIO extender number 13 through jumper wire.
-7.	Plug in the RasPi’s and the display’s power cables.
-8.	Plug in the motor’s power cable.
+3.	Solder breadboards into the jumper wires.
+    The pinout for the arduinos is:
+    SDA = A4
+    SCL = A5
+    VDD = 5V
+    GND = GND 
+5.	Attach arduinos to the breadboards and jumper wires into sensors.
+6.	Attach arduinos to the RasPi with the micro USB cables.
+7.	Attach motor to the Raspi’s GPIO extender number 13 through jumper wire.
+8.	Plug in the RasPi’s and the display’s power cables.
+9.	Plug in the motor’s power cable.
 
 ## Installing the software
 
