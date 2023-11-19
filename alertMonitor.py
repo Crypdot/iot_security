@@ -22,7 +22,7 @@ FLOW_HI = 100.0
 FLOW_LO = 0.0
 
 # Check alerts
-def alertTemperatureRange(message)-> str:
+def alertTemperatureRange(message: str)-> str:
     if float(message) > TEMP_HI:
         print("Temperature High!")
         return "TH"
@@ -31,7 +31,7 @@ def alertTemperatureRange(message)-> str:
         return "TL"
     #return "NA"
 
-def alertPressure(message) -> str:
+def alertPressure(message: str) -> str:
     if float(message) > PRESS_HI:
         return "PH"
     elif float(message) < PRESS_LO:
@@ -40,7 +40,7 @@ def alertPressure(message) -> str:
         return "PZ"
     #return "NA"
 
-def alertFlowRate(message) -> str:
+def alertFlowRate(message: str) -> str:
     if float(message) >= FLOW_HI:
         return "FH"
     elif float(message) <= FLOW_LO:
