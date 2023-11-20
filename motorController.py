@@ -228,7 +228,7 @@ subscribes to the motor config and command topics and goes to the control loop.
 """
 if __name__ == "__main__":
 	client.on_connect = onConnect
-	client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
+	client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 0)
 
 	client.subscribe([
 		(MQTT_TOPIC_MOTOR_CONFIG_IN, 1),
