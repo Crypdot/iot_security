@@ -20,7 +20,7 @@ You’re going to need atleast these components for the ventilator.
 - Sensirion SDP372 Differential Pressure sensor
 - Micro USB power cable (2pcs, one for Raspberry Pi, one for the display)
 - Power cable for the motor
-- Micro USB cables for arduinos
+- Micro USB cables for arduinos (3pcs)
 - jumper wires for sensors
 - Enclosure for the components, our ventilator was in a hard plastic box.
 - Mouse and keyboard for using the Raspberry Pi (optional)
