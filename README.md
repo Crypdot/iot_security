@@ -18,17 +18,17 @@ You’re going to need atleast these components for the ventilator.
 - Breadboards (3pcs) connecting Arduino’s to the sensors
 - Sensirion SFM3000-C200-sensor (2pcs)
 - Sensirion SDP372 Differential Pressure sensor
-- Micro USB power cable (2pcs, one for Raspi, one for the display)
+- Micro USB power cable (2pcs, one for Raspberry Pi, one for the display)
 - Power cable for the motor
 - Micro USB cables for arduinos
 - jumper wires for sensors
 - Enclosure for the components, our ventilator was in a hard plastic box.
-- Mouse and keyboard for using the RasPi (optional)
+- Mouse and keyboard for using the Raspberry Pi (optional)
 
 ## Building the ventilator
 When you have these, you can build the ventilator.
 
-1.	Connect Raspi into the display and the GPIO extender
+1.	Connect Raspberry Pi into the display and the GPIO extender
 2.	Connect the motor to the ESC and the motor’s power cable.
 3.	Solder breadboards into the jumper wires.
     The pinout for the arduinos is:
@@ -37,14 +37,14 @@ When you have these, you can build the ventilator.
     VDD = 5V
     GND = GND 
 5.	Attach arduinos to the breadboards and jumper wires into sensors.
-6.	Attach arduinos to the RasPi with the micro USB cables.
-7.	Attach motor to the Raspi’s GPIO extender number 13 through jumper wire.
-8.	Plug in the RasPi’s and the display’s power cables.
+6.	Attach arduinos to the Raspberry Pi with the micro USB cables.
+7.	Attach motor to the Raspberry Pi’s GPIO extender number 13 through jumper wire.
+8.	Plug in the Raspberry Pi’s and the display’s power cables.
 9.	Plug in the motor’s power cable.
 
 ## Installing the software
 
-You should have Python 3.11.5 and Git installed on your Raspi. 
+You should have Python 3.11.5 and Git installed on your Raspberry Pi. 
 Here is everything you need to do to get the software running.
 
 ### Clone the repo
@@ -69,7 +69,7 @@ If you want Mosquitto to start automatically every time you boot the device: ```
 
 Using venv makes it possible to setup the software easily.
 
-```python 3 -m venv venv```
+```python3 -m venv venv```
 
 ```source venv/bin/activate```
 
