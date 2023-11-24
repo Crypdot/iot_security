@@ -135,7 +135,7 @@ Flow rate into continuous mode, then DP into continuous mode.
 """
 print("Setting the sensors into continuous mode")
 
-if operatingMode == "inflowMode" or "outflowMode":
+if operatingMode == "inflowMode" or operatingMode == "outflowMode":
    sensor.write("1".encode())
 elif operatingMode == "diffMode":
    sensor.write("3".encode())
