@@ -21,10 +21,19 @@ Generally speaking, the plan is to have the following hierarchy. This is subject
 A few quick examples to get the general idea.
 
 ### Sensor channels
-- `box01/gasSensor01/gas/out`
-    - This will give the current gas sensor readings from `gasSensor01`, inside `box01`.
-- `box02/gasSensor01/pressure/out`
-    - This will give the current pressure readings from `gasSensor02`, inside `box02`
+- `box01/diffPressure01/pressure/out/`
+    - This will give the pressure readings from `diffPressure01`, inside `box01`.
+        - The reading will be given in Pascals. 
+- `box02/diffPressure02/pressure/out/`
+    - This will give the current pressure readings from `diffPressure02`, inside `box02`
+- `box01/diffPressure01/temperature/out/`
+    - This will give the temperature readings from `diffPressure01`, inside `box01`.
+        - The reading will be given in Celsius.
+- `box01/inflow01/inflowRate/out/`
+    - This will give the flow rate from the inflow sensor named `inflow01`, inside `box01`.
+    - The flowrate reading will be given in standard litre per minute (SLM).
+- `box01/outflow01/outflowRate/out/`
+    - This will give the flow rate from the outflow sensor named `outflow01`, inside `box01`.
 
 ## Motor channels
 - `box01/motor/config/in`

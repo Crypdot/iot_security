@@ -62,17 +62,17 @@ def setup():
 
 # Process Messages
 def onConnect(client, metadata, flags, rc):
-	print(f"Using MQTT broker at {MQTT_BROKER_HOST} at {str(MQTT_BROKER_PORT)}")
+   print(f"Using MQTT broker at {MQTT_BROKER_HOST} at {str(MQTT_BROKER_PORT)}")
 
 def onDisconnect(client, metadata, flags, rc):
-	print("MQTT Disconnected :: Reconnecting")
-	try:
-		client.reconnect()
-	except Exception as error:
-		print(f"Something went wrong :: {error}")
+   print("MQTT Disconnected :: Reconnecting")
+   try:
+      client.reconnect()
+   except Exception as error:
+      print(f"Something went wrong :: {error}")
 
 def publishError(message):
-	client.publish(f"ERROR :: {message}")
+   client.publish(f"ERROR :: {message}")
 
 def publishFlow(client, channel, value):
    try:
@@ -98,7 +98,7 @@ def publishDP(client, channel, value):
          temp = str(data[1]).strip()
          
          print(f"Publishing '{pressure}' to '{dpChannel}'")
-         client.publish(dpChannel+"pressure", pressure)
+         client.publish(dpChannel, pressure)
          print(f"Publishing '{temp}' to '{tempChannel}'")
          client.publish(tempChannel, temp)
    except Exception as error:
@@ -135,7 +135,7 @@ Flow rate into continuous mode, then DP into continuous mode.
 """
 print("Setting the sensors into continuous mode")
 
-if operatingMode == "inflowMode" or "outflowMode":
+if operatingMode == "inflowMode" or operatingMode == "outflowMode":
    sensor.write("1".encode())
 elif operatingMode == "diffMode":
    sensor.write("3".encode())

@@ -12,10 +12,10 @@ BOX_ID = os.getenv("BOX_ID")
 MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT"))
 
-TEMP_TOPIC = f"{BOX_ID}/+/temp/out/" # Topic for the speed graph
-PRESSURE_TOPIC = f"{BOX_ID}/+/pressure/out/" # Topic for the pressure graph
-FLOW_TOPIC = f"{BOX_ID}/+/flow/out/" # Topic for flow numbers
-
+TEMP_TOPIC = f"{BOX_ID}/+/temperature/out/" # Topic for the speed graph
+PRESSURE_TOPIC = f"{BOX_ID}/+/diffPressure/out/" # Topic for the pressure graph
+INFLOW_TOPIC = f"{BOX_ID}/+/inflowRate/out/" # Topic for flow numbers
+OUTFLOW_TOPIC = f"{BOX_ID}/+/outflowRate/out/"
 plt.rcParams["toolbar"] = "None"
 
 max_size = 40
@@ -33,11 +33,18 @@ temperatureValue = None
 
 def tempMessage(client, userdata, message):
     global temperatureValue
-    temperatureValue = int(message.payload)
+    temperatureValue = float(message.payload)
 
 def flowMessage(client, userdata, message):
-    appendToList(flowInList, message.payload)
-    appendToList(flowOutList, (-1 * float(message.payload)))
+    fields = message.topic.split("/")[0:]
+    if fields[2] == "inflowRate":
+        appendToList(flowInList, message.payload)
+    elif fields[2] == "outflowRate":
+        appendToList(flowOutList, message.payload)
+    else:
+        print(f"Something went wrong.")
+#    appendToList(flowInList, message.payload)
+#    appendToList(flowOutList, message.payload)
 
 def pressureMessage(client, userdata, message):
     appendToList(pressureList, message.payload)
@@ -63,7 +70,7 @@ def animateGraphs(i):
     ax1.plot(range(len(flowOutList)), flowOutList, marker="", label="Flow out", color="red")
     
     # Graph configurations
-    ax1.set_ylim(-40, 40)
+    ax1.set_ylim(-160, 160)
     ax1.set_xlim(0, max_size + (max_size / 4))
     ax1.set_xlabel("Time")
     ax1.set_ylabel("Value")
@@ -77,7 +84,7 @@ def animateGraphs(i):
     ax2.plot(range(len(pressureList)), pressureList, marker="")
 
     # Graph configurations
-    ax2.set_ylim(-1, 1) # Min and max values shown on the graph
+    ax2.set_ylim(-100, 100) # Min and max values shown on the graph
     ax2.set_xlim(0, max_size + (max_size / 4))
     ax2.set_xlabel("Time")
     ax2.set_ylabel("Value")
@@ -123,7 +130,8 @@ if __name__ == "__main__":
     # Subscribe to the box's topic and bind different topics to functions
     client.subscribe([(f"{BOX_ID}/+/+/+/", 1)])
     client.message_callback_add(TEMP_TOPIC, tempMessage)
-    client.message_callback_add(FLOW_TOPIC, flowMessage)
+    client.message_callback_add(INFLOW_TOPIC, flowMessage)
+    client.message_callback_add(OUTFLOW_TOPIC, flowMessage)
     client.message_callback_add(PRESSURE_TOPIC, pressureMessage)
 
     client.loop_start()
