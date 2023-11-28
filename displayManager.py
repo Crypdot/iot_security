@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import paho.mqtt.client as mqtt
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.widgets import TextBox, Button
 
 load_dotenv()
 
@@ -11,59 +12,71 @@ BOX_ID = os.getenv("BOX_ID")
 MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT"))
 
-SPEED_TOPIC = f"{BOX_ID}/+/speed/out/" # Topic for the speed graph
-PRESSURE_TOPIC = f"{BOX_ID}/+/pressure/out/" # Topic for the pressure graph
-FLOW_TOPIC = f"{BOX_ID}/+/flow/out/" # Topic for flow numbers
+TEMP_TOPIC = f"{BOX_ID}/+/temperature/out/" # Topic for the speed graph
+PRESSURE_TOPIC = f"{BOX_ID}/+/diffPressure/out/" # Topic for the pressure graph
+INFLOW_TOPIC = f"{BOX_ID}/+/inflowRate/out/" # Topic for flow numbers
+OUTFLOW_TOPIC = f"{BOX_ID}/+/outflowRate/out/"
+plt.rcParams["toolbar"] = "None"
 
-plt.rcParams['toolbar'] = 'None'
-
-# Motor's speed values are stored in this list
-speedList = []
-speedSize = 40 # The "size" of the list
+max_size = 40
 
 # Pressure's values
 pressureList = []
-pressureSize = 40
 
 # Flow sensor values
-flowInValue = 0
-flowOutValue = 0
+flowInList = []
+flowOutList = []
 
-"""
-Adds the speed topic's value to a list. The last value is removed once a threshold is reached. 
-"""
-def speedMessage(client, userdata, message):
-    value = int(message.payload)
-    speedList.append(value)
-    if len(speedList) > speedSize:
-        speedList.pop(0)
+# Temperature
+temperatureValue = None
+
+
+def tempMessage(client, userdata, message):
+    global temperatureValue
+    temperatureValue = float(message.payload)
 
 def flowMessage(client, userdata, message):
-    global flowInValue
-    flowInValue = int(message.payload)
+    fields = message.topic.split("/")[0:]
+    if fields[2] == "inflowRate":
+        appendToList(flowInList, message.payload)
+    elif fields[2] == "outflowRate":
+        appendToList(flowOutList, message.payload)
+    else:
+        print(f"Something went wrong.")
+#    appendToList(flowInList, message.payload)
+#    appendToList(flowOutList, message.payload)
 
 def pressureMessage(client, userdata, message):
-    value = int(message.payload)
-    pressureList.append(value)
-    if len(pressureList) > pressureSize:
-        pressureList.pop(0)
+    appendToList(pressureList, message.payload)
+
+"""
+Adds a value to a list, discards values if over limit. 
+Used by line graphs. 
+"""
+def appendToList(listToAdd: list, data):
+    value = float(data)
+    listToAdd.append(value)
+    if len(listToAdd) > max_size:
+        listToAdd.pop(0)
 
 """
 Creates a matplotlib animation of line graphs and values. Animation function passes one argument. 
 """
 def animateGraphs(i):
-    # Speed graph
-    # Clear and build the graph
+    # Flow i/o graphs
+    # Clear and build the graphs
     ax1.clear()
-    ax1.plot(range(len(speedList)), speedList, marker="")
+    ax1.plot(range(len(flowInList)), flowInList, marker="", label="Flow in", color="blue")
+    ax1.plot(range(len(flowOutList)), flowOutList, marker="", label="Flow out", color="red")
     
     # Graph configurations
-    ax1.set_ylim(1250, 2049)
-    ax1.set_xlim(0, pressureSize + (pressureSize / 4))
+    ax1.set_ylim(-160, 160)
+    ax1.set_xlim(0, max_size + (max_size / 4))
     ax1.set_xlabel("Time")
     ax1.set_ylabel("Value")
     ax1.set_xticks([])
-    ax1.set_title("Speed", loc="left")
+    ax1.set_title("Flow", loc="left")
+    ax1.legend()
 
     # Pressure graph
     # Clear and build the graph
@@ -71,19 +84,35 @@ def animateGraphs(i):
     ax2.plot(range(len(pressureList)), pressureList, marker="")
 
     # Graph configurations
-    ax2.set_ylim(0, 9999) # Min and max values shown on the graph
-    ax2.set_xlim(0, pressureSize + (pressureSize / 4))
+    ax2.set_ylim(-100, 100) # Min and max values shown on the graph
+    ax2.set_xlim(0, max_size + (max_size / 4))
     ax2.set_xlabel("Time")
     ax2.set_ylabel("Value")
     ax2.set_xticks([])
     ax2.set_title("Pressure", loc="left")
 
-    # Flow numbers
+    # Temperature number
     ax3.clear()
-    ax3.text(0, 1, f"Flow in: {flowInValue}", fontsize=24)
-    ax3.text(0, 0.5, f"Flow out: {flowInValue}", fontsize=24)
+    ax3.text(0, 1, f"Temp: {temperatureValue}°C", fontsize=24)
     ax3.set_xticks([])
     ax3.set_yticks([])
+
+def changeBox(val):
+    global BOX_ID
+    global pressureList
+    global flowInList
+    global flowOutList
+    global temperatureValue
+    pressureList = []
+    flowInList = []
+    flowOutList = []
+    temperatureValue = 0
+
+    client.unsubscribe(f"{BOX_ID}/+/+/+/")
+    BOX_ID = val
+    client.subscribe([(f"{BOX_ID}/+/+/+/", 1)])
+    client.loop_start()
+
 
 """
 When figure is closed, gracefully disconnects MQTT
@@ -96,12 +125,13 @@ if __name__ == "__main__":
     global running
     client = mqtt.Client()
 
-    client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
+    client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 0)
 
     # Subscribe to the box's topic and bind different topics to functions
     client.subscribe([(f"{BOX_ID}/+/+/+/", 1)])
-    client.message_callback_add(SPEED_TOPIC, speedMessage)
-    client.message_callback_add(FLOW_TOPIC, flowMessage)
+    client.message_callback_add(TEMP_TOPIC, tempMessage)
+    client.message_callback_add(INFLOW_TOPIC, flowMessage)
+    client.message_callback_add(OUTFLOW_TOPIC, flowMessage)
     client.message_callback_add(PRESSURE_TOPIC, pressureMessage)
 
     client.loop_start()
@@ -111,6 +141,10 @@ if __name__ == "__main__":
     ax1 = fig.add_subplot(2, 1, 1)
     ax2 = fig.add_subplot(2, 2, 3)
     ax3 = fig.add_subplot(3, 2, 6, frameon=False)
+
+    graphBox = fig.add_axes([0.1, 0.025, 0.8, 0.05])
+    textbox = TextBox(graphBox, "Box ID:", initial=BOX_ID)
+    textbox.on_submit(changeBox)
 
     fig.canvas.mpl_connect('close_event', onClose)
     ani = FuncAnimation(fig, animateGraphs, interval=50, frames=20)

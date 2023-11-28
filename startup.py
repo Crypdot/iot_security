@@ -55,7 +55,7 @@ def sendHttpRequest():
     try:
         response = requests.get(url)
     except Exception as e:
-        print("Error")
+        print(f"Error: {e}")
 
     if response.status_code == 201:
         print("HTTP request successful.")
