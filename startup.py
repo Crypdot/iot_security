@@ -57,7 +57,7 @@ async def sendHttpRequest(body):
     try:
         response = await requests.post(url)
     except Exception as e:
-        print("Error")
+        print(f"Error: {e}")
 
     if response.status_code == 200:
         print("HTTP request successful.")
