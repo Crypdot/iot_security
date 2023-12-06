@@ -11,11 +11,16 @@ load_dotenv()
 BOX_ID = os.getenv("BOX_ID")
 MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT"))
+MQTT_TOPIC_SENSOR_OUTFLOW_OUT = os.getenv("MQTT_TOPIC_SENSOR_OUTFLOW_OUT")
+MQTT_TOPIC_SENSOR_INFLOW_OUT = os.getenv("MQTT_TOPIC_SENSOR_INFLOW_OUT")
+MQTT_TOPIC_SENSOR_DP_OUT = os.getenv("MQTT_TOPIC_SENSOR_DP_OUT")
+MQTT_TOPIC_SENSOR_TEMP_OUT = os.getenv("MQTT_TOPIC_SENSOR_TEMP_OUT")
 
-TEMP_TOPIC = f"{BOX_ID}/+/temperature/out/" # Topic for the speed graph
-PRESSURE_TOPIC = f"{BOX_ID}/+/diffPressure/out/" # Topic for the pressure graph
-INFLOW_TOPIC = f"{BOX_ID}/+/inflowRate/out/" # Topic for flow numbers
-OUTFLOW_TOPIC = f"{BOX_ID}/+/outflowRate/out/"
+TEMP_TOPIC = f"{BOX_ID}/+{MQTT_TOPIC_SENSOR_TEMP_OUT}" # Topic for the speed graph
+PRESSURE_TOPIC = f"{BOX_ID}/+{MQTT_TOPIC_SENSOR_DP_OUT}"
+OUTFLOW_TOPIC = f"{BOX_ID}/+{MQTT_TOPIC_SENSOR_OUTFLOW_OUT}"
+INFLOW_TOPIC = f"{BOX_ID}/+{MQTT_TOPIC_SENSOR_INFLOW_OUT}" # Topic for flow numbers
+
 plt.rcParams["toolbar"] = "None"
 
 max_size = 40
