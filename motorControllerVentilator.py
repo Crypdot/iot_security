@@ -11,7 +11,7 @@ load_dotenv()
 
 class PCA9685:
 	'''
-	PWM motor controler using PCA9685 boards.
+	PWM motor controller using PCA9685 boards.
 	This is used for most RC Cars
 
 	https://github.com/autorope/donkeycar
