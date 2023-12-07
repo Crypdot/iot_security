@@ -7,14 +7,16 @@ import requests
 from stop import stopProcesses
 
 FILEPATH = "pids.txt"
-
+BOX_ID = ""
 """
 Checks that the configuration file exists. 
 TODO: functionality to create and initialize .env file. 
 """
 def checkEnv():
     if os.path.exists(".env"):
+        global BOX_ID
         load_dotenv()
+        BOX_ID = os.getenv("BOX_ID")
     else:
         raise FileNotFoundError(".env does not exist.")
 
@@ -49,18 +51,20 @@ def startProcesses(processes: list):
 HTTP request to initiate the TPM authentication. 
 WIP. 
 """
-def sendHttpRequest():
+async def sendHttpRequest(body):
     url = os.getenv("HTTP_HOST")
 
     try:
-        response = requests.get(url)
+        response = await requests.post(url)
     except Exception as e:
-        print("Error")
+        print(f"Error: {e}")
 
-    if response.status_code == 201:
+    if response.status_code == 200:
         print("HTTP request successful.")
+        return 200
     else:
         print(f"Unsuccessful, response: {response}")
+        return 401
 
 if __name__ == "__main__":
 
@@ -76,8 +80,10 @@ if __name__ == "__main__":
             stopProcesses(FILEPATH)
 
         checkEnv()
-        startProcesses(processes)
-        sendHttpRequest()
+        if sendHttpRequest(BOX_ID) == 200:
+            startProcesses(processes)
+        else:
+            print("Unathorized")
     except FileNotFoundError as e:
         print(f"File not found: {e}")
     except Exception as e:

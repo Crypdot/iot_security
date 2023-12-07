@@ -73,5 +73,5 @@ def modeMenu():
 
 if __name__ == "__main__":
     client.on_connect = onConnect
-    client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
+    client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 0)
     mainMenu()
